@@ -10,6 +10,9 @@
 import tkinter as tk
 from tkinter import ttk, filedialog
 
+import logging
+import traceback
+
 import requests
 import sys
 import os
@@ -26,6 +29,8 @@ def format_error(exception: Exception, message: str = None) -> str:
         message = f'{message} '
     else:
         message = ""
+
+    logging.error(f'{name}: {exception}\n{traceback.format_exc()}')
     return f'{message}[{name}]: {str(exception)}'
 
 class _UpdaterUI:
@@ -91,7 +96,7 @@ class Updater:
         
         # Install the downloaded archive in a temporary file
         try:
-            installed_archive = tempfile.TemporaryFile(mode="w")
+            installed_archive = tempfile.TemporaryFile(mode="wb")
             installed_archive.write(download_response.content)
         except Exception as e:
             interface.root.destroy()
@@ -150,4 +155,5 @@ if __name__ == "__main__":
     print("(Library testing)")
     s, r = Updater(input("url> "), filedialog.askdirectory(initialdir=os.path.dirname(__file__))).update()
 
-    input(s,r)
+    print(s,r)
+    input()
