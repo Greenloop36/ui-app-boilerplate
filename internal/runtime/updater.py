@@ -123,7 +123,7 @@ class Updater:
 
         # Run update
         update_thread = threading.Thread(target=self._update)
-        self._running = True
+        update_thread.start()
 
         while update_thread.is_alive():
             self.interface.poll()
