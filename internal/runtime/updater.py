@@ -8,7 +8,7 @@
 
 ## Imports
 import tkinter as tk
-from tkinter import ttk, messagebox
+from tkinter import ttk, filedialog
 
 import requests
 import sys
@@ -144,3 +144,8 @@ class Updater:
         interface.root.destroy()
 
         return True, None
+
+# Add testing functionality
+if __name__ == "__main__":
+    print("(Library testing)")
+    Updater(input("url> "), filedialog.askdirectory(initialdir=os.path.dirname(__file__)))
