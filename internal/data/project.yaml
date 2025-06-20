@@ -4,6 +4,7 @@ repository: {
   name: ui-app-boilerplate
 }
 
+# Information about this project
 project_information: {
   name: UI App Boilerplate
 }
