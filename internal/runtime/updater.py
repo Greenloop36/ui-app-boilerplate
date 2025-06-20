@@ -101,10 +101,10 @@ class UpdaterInterface:
     #     self._running = False
     #     self._loop.join()
     
-    # def destroy(self):
-    #     if self._running:
-    #         self.loop_stop()
-    #         self.root.destroy()
+    def destroy(self):
+        if self._running:
+            self.loop_stop()
+            self.root.destroy()
 
 class Updater:
     def __init__(self, url: str, directory: str, branch: str = "main", update_name: str = "performing software update...", ui_master: tk.Tk = None) -> None:
