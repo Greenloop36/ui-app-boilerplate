@@ -11,9 +11,11 @@
 import os
 import sys
 import io
+import typing
 
 import usersettings
 import json
+import yaml
 
 # Classes
 class SettingsHelper:
@@ -52,7 +54,7 @@ class FileSystem:
     def get_path(self, relative_path: str) -> str:
         return os.path.join(self.base_path, relative_path)
     
-    def get_resource(self, path: str, path_is_relative: bool = True) -> io.TextIOWrapper[io._WrappedBuffer]:
+    def get_resource(self, path: str, path_is_relative: bool = True) -> io.TextIOWrapper:
         if path_is_relative:
             path = self.get_path(path)
         
@@ -61,10 +63,12 @@ class FileSystem:
         
         return open(path, "r")
 
-    def read_resource(self, path: str, is_json: bool = False) -> str | dict:
+    def read_resource(self, path: str, file_type: typing.Literal["yaml", "json"] | None = None) -> str | dict:
         file = self.get_resource(path, True)
 
-        if is_json:
+        if file_type == "json":
             return json.loads(file.read())
+        elif file_type == "yaml":
+            return yaml.safe_load(file)
         else:
             return file.read()

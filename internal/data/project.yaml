@@ -7,5 +7,5 @@ repository: {
 # Information about this project
 project_information: {
   name: UI App Boilerplate,
-  app_id: com.gl36.ui-app-boilerplate
+  app_id: com.gl36.ui-app-boilerplate,
 }

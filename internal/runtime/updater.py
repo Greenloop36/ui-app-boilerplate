@@ -108,17 +108,17 @@ class UpdaterInterface:
 
 class Updater:
     def __init__(self,
-            url: str,
+            author: str,
+            repository: str,
             directory: str,
-            branch: str = "main",
             update_title: str = "Software Update",
             update_name: str = "performing software update...",
             ui_master: tk.Tk = None
         ) -> None:
         
-        self.url = url
+        self.author = author
+        self.repository = repository
         self.dir = directory
-        self.branch = branch
         self.ui_master = ui_master
         self.title = update_title
         self.update_name = update_name
@@ -149,7 +149,7 @@ class Updater:
         # Download new archive
         self.interface.set_status("downloading archive")
         try:
-            download_response = requests.get(f'{self.url}/{self.branch}')
+            download_response = requests.get(f'https://api.github.com/repos/{self.author}/{self.repository}/zipball')
             download_response.raise_for_status()
         except Exception as e:
             self._update_result = (False, format_error(e, "Download failed!"))
@@ -215,6 +215,31 @@ class Updater:
         self._update_result = (True, None)
 
         return True, None
+    
+    def get_repository_file_content(self, path: str) -> Result:
+        try:
+            response = requests.get(f'https://raw.githubusercontent.com/{self.author}/{self.repository}/refs/heads/main/{path}')
+            response.raise_for_status()
+        except Exception as e:
+            return False, format_error(e, f'Failed to get file {path}! ')
+        else:
+            return True, response.text
+        
+    def is_update_available(self, current_version: str) -> Result:
+        success, result = self.get_repository_file_content("internal/data/VERSION")
+
+        if not success:
+            # The request failed, so assume there isnt
+            return False, None
+        else:
+            result = result.replace("\n", "")
+
+            if result == current_version:
+                # 
+                return False, None
+            else:
+                # An update is available
+                return True, result            
 
 # Add testing functionality
 if __name__ == "__main__":
