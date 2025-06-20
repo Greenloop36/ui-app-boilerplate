@@ -88,23 +88,23 @@ class UpdaterInterface:
 
         self.root.update()
     
-    def _runloop(self):
-        while self._running:
-            self.poll()
+    # def _runloop(self):
+    #     while self._running:
+    #         self.poll()
 
-    def loop_start(self):
-        self._loop = threading.Thread(target=self._runloop)
-        self._running = True
-        self._loop.start()
+    # def loop_start(self):
+    #     self._loop = threading.Thread(target=self._runloop)
+    #     self._running = True
+    #     self._loop.start()
     
-    def loop_stop(self):
-        self._running = False
-        self._loop.join()
+    # def loop_stop(self):
+    #     self._running = False
+    #     self._loop.join()
     
-    def destroy(self):
-        if self._running:
-            self.loop_stop()
-            self.root.destroy()
+    # def destroy(self):
+    #     if self._running:
+    #         self.loop_stop()
+    #         self.root.destroy()
 
 class Updater:
     def __init__(self, url: str, directory: str, branch: str = "main", update_name: str = "performing software update...", ui_master: tk.Tk = None) -> None:
@@ -123,7 +123,7 @@ class Updater:
 
         # Run update
         update_thread = threading.Thread(target=self._update)
-        update_thread.start()
+        update_thread.run()
 
         while update_thread.is_alive():
             self.interface.poll()
@@ -131,7 +131,7 @@ class Updater:
         # update_thread.join()
 
         self.interface.destroy()
-        return self._update_result
+        return self._update_result or ()
 
     def _update(self) -> Result:
         # Set UI
