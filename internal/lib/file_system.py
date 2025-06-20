@@ -10,6 +10,7 @@
 # Imports
 import os
 import sys
+import io
 
 import usersettings
 import json
@@ -35,3 +36,27 @@ class SettingsHelper:
     
     def save(self):
         self.settings.save_settings()
+
+class FileSystem:
+    def __init__(self, app_path: str):
+        self.app_path: str = app_path
+        self.base_path: str = None
+
+        if getattr(sys, "frozen", False):
+            # Running in a .exe
+            self.base_path = sys._MEIPASS
+        else:
+            # Running a regular script
+            self.base_path = os.path.dirname(os.path.abspath(app_path))
+    
+    def get_path(self, relative_path: str) -> str:
+        return os.path.join(self.base_path, relative_path)
+    
+    def get_resource(self, path: str, path_is_relative: bool = True) -> io.TextIOWrapper[io._WrappedBuffer]:
+        if path_is_relative:
+            path = self.get_path(path)
+        
+        if not os.path.exists(path):
+            raise FileNotFoundError(f'Unknown path {path}')
+        
+        return open(path, "r")
