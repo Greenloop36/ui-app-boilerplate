@@ -20,6 +20,7 @@ import os
 import zipfile
 import tempfile
 import shutil
+import io
 
 ## Class
 def format_error(exception: Exception, message: str = None) -> str:
@@ -107,9 +108,12 @@ class Updater:
         try:
             # Create a temporary directory to extract to
             archive_dump = tempfile.TemporaryDirectory(ignore_cleanup_errors=True)
+
+            # Create a temporary buffer containing the zip data
+            # io.BytesIO(download_response.content)
             
             # Extract the file
-            with zipfile.ZipFile(installed_archive.name, "r") as file:
+            with zipfile.ZipFile(installed_archive, "r") as file:
                 file.extractall(archive_dump.name)
             
             # The downloaded archive is no longer required, so remove it.
