@@ -60,3 +60,11 @@ class FileSystem:
             raise FileNotFoundError(f'Unknown path {path}')
         
         return open(path, "r")
+
+    def read_resource(self, path: str, is_json: bool = False) -> str | dict:
+        file = self.get_resource(path, True)
+
+        if is_json:
+            return json.loads(file.read())
+        else:
+            return file.read()
