@@ -110,10 +110,10 @@ class Updater:
             archive_dump = tempfile.TemporaryDirectory(ignore_cleanup_errors=True)
 
             # Create a temporary buffer containing the zip data
-            # io.BytesIO(download_response.content)
+            zip_buffer = io.BytesIO(download_response.content)
             
             # Extract the file
-            with zipfile.ZipFile(installed_archive, "r") as file:
+            with zipfile.ZipFile(zip_buffer, "r") as file:
                 file.extractall(archive_dump.name)
             
             # The downloaded archive is no longer required, so remove it.
