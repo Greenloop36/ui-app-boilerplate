@@ -16,6 +16,7 @@ import traceback
 import requests
 import sys
 import os
+import threading
 
 import zipfile
 import tempfile
@@ -34,11 +35,19 @@ def format_error(exception: Exception, message: str = None) -> str:
     logging.error(f'{name}: {exception}\n{traceback.format_exc()}')
     return f'{message}[{name}]: {str(exception)}'
 
-class _UpdaterUI:
+class UpdaterInterface:
     def __init__(self, title: str, ui_master: tk.Tk | None = None) -> None:
+        # Properties
         self.ui_master = ui_master
         self.title = title
 
+        self._loop: threading.Thread = None
+        self._running: bool = False
+        self._text_status: str = ""
+        self._progress_current: float | int = 0
+        self._progress_max: float | int = 0
+
+        # Init
         if not self.ui_master:
             self.root = tk.Tk()
         else:
@@ -51,24 +60,45 @@ class _UpdaterUI:
         self.label_title = ttk.Label(self.container, text=self.title, anchor="w")
         self.label_title.pack(expand=True, fill="x")
 
-        self.label_status = ttk.Label(self.container, text="waiting to update...", anchor="w")
+        self.label_status = ttk.Label(self.container, text="preparing...", anchor="w")
         self.label_status.pack(expand=True, fill="x")
 
         self.progress_bar = ttk.Progressbar(self.container, length=300)
         self.progress_bar.pack(fill="x", expand=True, pady=(20, 0))
     
     def set_status(self, text: str = ""):
-        self.label_status.config(text=text)
-        self.root.update()
+        self._text_status = text
     
     def set_progress(self, current: float | int = None, max: float| int = None):
         if current != None:
-            self.progress_bar["value"] = current
+            self._progress_current = current
         
         if max != None:
-            self.progress_bar.config(maximum=max)
+            self._progress_max = max
         
         self.root.update()
+    
+    def _runloop(self):
+        while self._running:
+            self.label_status.config(text=self._text_status)
+            self.progress_bar["value"] = self._progress_current
+            self.progress_bar.config(maximum=self._progress_max)
+
+            self.root.update()
+
+    def loop_start(self):
+        self._loop = threading.Thread(target=self._runloop)
+        self._running = True
+        self._loop.start()
+    
+    def loop_stop(self):
+        self._running = False
+        self._loop.join()
+    
+    def destroy(self):
+        if self._running:
+            self.loop_stop()
+            self.root.destroy()
 
 class Updater:
     def __init__(self, url: str, directory: str, branch: str = "main", update_name: str = "performing software update...", ui_master: tk.Tk = None) -> None:
@@ -80,7 +110,8 @@ class Updater:
     
     def update(self) -> tuple[bool, str | None]:
         # Create UI
-        interface = _UpdaterUI(self.title)
+        interface = UpdaterInterface(self.title)
+        interface.loop_start()
         interface.set_progress(0, 3)
        
 
@@ -90,7 +121,7 @@ class Updater:
             download_response = requests.get(f'{self.url}/{self.branch}')
             download_response.raise_for_status()
         except Exception as e:
-            interface.root.destroy()
+            interface.destroy()
             return False, format_error(e, "Download failed!")
         
         interface.set_progress(1)
@@ -100,7 +131,7 @@ class Updater:
         #     installed_archive = tempfile.TemporaryFile(mode="wb", suffix=".zip")
         #     installed_archive.write(download_response.content)
         # except Exception as e:
-        #     interface.root.destroy()
+        #     interface.destroy()
         #     return False, format_error(e, "Failed to install temporary archive!")
         
         # Extract the downloaded archive
@@ -120,7 +151,7 @@ class Updater:
             # installed_archive.close()
             # del installed_archive
         except Exception as e:
-            interface.root.destroy()
+            interface.destroy()
             return False, format_error(e, "Failed to extract the downloaded archive!")
         
         interface.set_progress(2)
@@ -131,7 +162,7 @@ class Updater:
         #     shutil.rmtree(self.dir)
         #     os.makedirs(self.dir)
         # except Exception as e:
-        #     interface.root.destroy()
+        #     
         #     return False, format_error(e, "Failed to remove the current installation!")
         
         # interface.set_progress(3)
@@ -142,7 +173,7 @@ class Updater:
             for folder in os.listdir(archive_dump.name):
                 shutil.copytree(f'{archive_dump.name}\\{folder}', self.dir, dirs_exist_ok=True)
         except Exception as e:
-            interface.root.destroy()
+            
             return False, format_error(e, "Failed to install new files!")
         
         interface.set_progress(3)
@@ -151,7 +182,7 @@ class Updater:
         interface.set_status("finishing software update")
         archive_dump.cleanup()
 
-        interface.root.destroy()
+        
 
         return True, None
 
