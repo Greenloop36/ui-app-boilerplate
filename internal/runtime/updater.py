@@ -81,7 +81,7 @@ class Updater:
     def update(self) -> tuple[bool, str | None]:
         # Create UI
         interface = _UpdaterUI(self.title)
-        interface.set_progress(0, 5)
+        interface.set_progress(0, 3)
        
 
         # Download new archive
@@ -96,12 +96,12 @@ class Updater:
         interface.set_progress(1)
         
         # Install the downloaded archive in a temporary file
-        try:
-            installed_archive = tempfile.TemporaryFile(mode="wb", suffix=".zip")
-            installed_archive.write(download_response.content)
-        except Exception as e:
-            interface.root.destroy()
-            return False, format_error(e, "Failed to install temporary archive!")
+        # try:
+        #     installed_archive = tempfile.TemporaryFile(mode="wb", suffix=".zip")
+        #     installed_archive.write(download_response.content)
+        # except Exception as e:
+        #     interface.root.destroy()
+        #     return False, format_error(e, "Failed to install temporary archive!")
         
         # Extract the downloaded archive
         interface.set_status("extracting downloaded archive")
@@ -117,8 +117,8 @@ class Updater:
                 file.extractall(archive_dump.name)
             
             # The downloaded archive is no longer required, so remove it.
-            installed_archive.close()
-            del installed_archive
+            # installed_archive.close()
+            # del installed_archive
         except Exception as e:
             interface.root.destroy()
             return False, format_error(e, "Failed to extract the downloaded archive!")
@@ -126,15 +126,15 @@ class Updater:
         interface.set_progress(2)
         
         # Remove the current files
-        interface.set_status("removing current installation")
-        try:
-            shutil.rmtree(self.dir)
-            os.makedirs(self.dir)
-        except Exception as e:
-            interface.root.destroy()
-            return False, format_error(e, "Failed to remove the current installation!")
+        # interface.set_status("removing current installation")
+        # try:
+        #     shutil.rmtree(self.dir)
+        #     os.makedirs(self.dir)
+        # except Exception as e:
+        #     interface.root.destroy()
+        #     return False, format_error(e, "Failed to remove the current installation!")
         
-        interface.set_progress(3)
+        # interface.set_progress(3)
 
         # Install the extracted data
         interface.set_status("installing update")
@@ -145,7 +145,7 @@ class Updater:
             interface.root.destroy()
             return False, format_error(e, "Failed to install new files!")
         
-        interface.set_progress(4)
+        interface.set_progress(3)
         
         # Finish the update
         interface.set_status("finishing software update")
