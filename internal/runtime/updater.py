@@ -97,7 +97,7 @@ class Updater:
         
         # Install the downloaded archive in a temporary file
         try:
-            installed_archive = tempfile.TemporaryFile(mode="wb")
+            installed_archive = tempfile.TemporaryFile(mode="wb", suffix=".zip")
             installed_archive.write(download_response.content)
         except Exception as e:
             interface.root.destroy()
