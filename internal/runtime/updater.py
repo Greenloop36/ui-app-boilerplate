@@ -23,6 +23,9 @@ import tempfile
 import shutil
 import io
 
+## Types
+type Result = tuple[bool, str | None]
+
 ## Class
 def format_error(exception: Exception, message: str = None) -> str:
     name: str = type(exception).__name__
@@ -78,13 +81,16 @@ class UpdaterInterface:
         
         self.root.update()
     
+    def poll(self):
+        self.label_status.config(text=self._text_status)
+        self.progress_bar["value"] = self._progress_current
+        self.progress_bar.config(maximum=self._progress_max)
+
+        self.root.update()
+    
     def _runloop(self):
         while self._running:
-            self.label_status.config(text=self._text_status)
-            self.progress_bar["value"] = self._progress_current
-            self.progress_bar.config(maximum=self._progress_max)
-
-            self.root.update()
+            self.poll()
 
     def loop_start(self):
         self._loop = threading.Thread(target=self._runloop)
@@ -107,24 +113,40 @@ class Updater:
         self.branch = branch
         self.ui_master = ui_master
         self.title = update_name
+
+        self.interface: UpdaterInterface = None
+        self._update_result: Result = None
     
-    def update(self) -> tuple[bool, str | None]:
-        # Create UI
-        interface = UpdaterInterface(self.title)
-        interface.loop_start()
-        interface.set_progress(0, 3)
-       
+    def update(self) -> Result:
+        # Init UI
+        self.interface = UpdaterInterface(self.title)
+
+        # Run update
+        update_thread = threading.Thread(target=self._update)
+        self._running = True
+
+        while update_thread.is_alive():
+            self.interface.poll()
+        
+        # update_thread.join()
+
+        self.interface.destroy()
+        return self._update_result
+
+    def _update(self) -> Result:
+        # Set UI
+        self.interface.set_progress(0, 3)
 
         # Download new archive
-        interface.set_status("downloading archive")
+        self.interface.set_status("downloading archive")
         try:
             download_response = requests.get(f'{self.url}/{self.branch}')
             download_response.raise_for_status()
         except Exception as e:
-            interface.destroy()
-            return False, format_error(e, "Download failed!")
+            self._update_result = (False, format_error(e, "Download failed!"))
+            return
         
-        interface.set_progress(1)
+        self.interface.set_progress(1)
         
         # Install the downloaded archive in a temporary file
         # try:
@@ -135,7 +157,7 @@ class Updater:
         #     return False, format_error(e, "Failed to install temporary archive!")
         
         # Extract the downloaded archive
-        interface.set_status("extracting downloaded archive")
+        self.interface.set_status("extracting downloaded archive")
         try:
             # Create a temporary directory to extract to
             archive_dump = tempfile.TemporaryDirectory(ignore_cleanup_errors=True)
@@ -151,10 +173,10 @@ class Updater:
             # installed_archive.close()
             # del installed_archive
         except Exception as e:
-            interface.destroy()
-            return False, format_error(e, "Failed to extract the downloaded archive!")
+            self._update_result = (False, format_error(e, "Failed to extract the downloaded archive!"))
+            return
         
-        interface.set_progress(2)
+        self.interface.set_progress(2)
         
         # Remove the current files
         # interface.set_status("removing current installation")
@@ -168,21 +190,20 @@ class Updater:
         # interface.set_progress(3)
 
         # Install the extracted data
-        interface.set_status("installing update")
+        self.interface.set_status("installing update")
         try:
             for folder in os.listdir(archive_dump.name):
                 shutil.copytree(f'{archive_dump.name}\\{folder}', self.dir, dirs_exist_ok=True)
         except Exception as e:
-            
-            return False, format_error(e, "Failed to install new files!")
+            self._update_result = (False, format_error(e, "Failed to install new files!"))
+            return
         
-        interface.set_progress(3)
+        self.interface.set_progress(3)
         
         # Finish the update
-        interface.set_status("finishing software update")
+        self.interface.set_status("finishing software update")
         archive_dump.cleanup()
-
-        
+        self._update_result = (True, None)
 
         return True, None
 
