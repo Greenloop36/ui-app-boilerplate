@@ -84,6 +84,7 @@ class Updater:
             download_response = requests.get(f'{self.url}/{self.branch}')
             download_response.raise_for_status()
         except Exception as e:
+            interface.root.destroy()
             return False, format_error(e, "Download failed!")
         
         interface.set_progress(1)
@@ -93,6 +94,7 @@ class Updater:
             installed_archive = tempfile.TemporaryFile(mode="w")
             installed_archive.write(download_response.content)
         except Exception as e:
+            interface.root.destroy()
             return False, format_error(e, "Failed to install temporary archive!")
         
         # Extract the downloaded archive
@@ -109,6 +111,7 @@ class Updater:
             installed_archive.close()
             del installed_archive
         except Exception as e:
+            interface.root.destroy()
             return False, format_error(e, "Failed to extract the downloaded archive!")
         
         interface.set_progress(2)
@@ -119,6 +122,7 @@ class Updater:
             shutil.rmtree(self.dir)
             os.makedirs(self.dir)
         except Exception as e:
+            interface.root.destroy()
             return False, format_error(e, "Failed to remove the current installation!")
         
         interface.set_progress(3)
@@ -128,6 +132,7 @@ class Updater:
         try:
             shutil.copytree(archive_dump.name, self.dir, dirs_exist_ok=True)
         except Exception as e:
+            interface.root.destroy()
             return False, format_error(e, "Failed to install new files!")
         
         interface.set_progress(4)
