@@ -140,7 +140,7 @@ class Updater:
         interface.set_status("installing update")
         try:
             for folder in os.listdir(archive_dump.name):
-                shutil.copytree(folder, self.dir, dirs_exist_ok=True)
+                shutil.copytree(f'{archive_dump.name}\\{folder}', self.dir, dirs_exist_ok=True)
         except Exception as e:
             interface.root.destroy()
             return False, format_error(e, "Failed to install new files!")
