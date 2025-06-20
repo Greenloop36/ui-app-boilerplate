@@ -148,4 +148,6 @@ class Updater:
 # Add testing functionality
 if __name__ == "__main__":
     print("(Library testing)")
-    Updater(input("url> "), filedialog.askdirectory(initialdir=os.path.dirname(__file__)))
+    s, r = Updater(input("url> "), filedialog.askdirectory(initialdir=os.path.dirname(__file__))).update()
+
+    input(s,r)
