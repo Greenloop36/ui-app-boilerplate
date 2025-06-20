@@ -1,0 +1,9 @@
+# The GitHub repo to connect this project to
+repository: {
+  owner: Greenloop36,
+  name: ui-app-boilerplate
+}
+
+project_information: {
+  name: UI App Boilerplate
+}
