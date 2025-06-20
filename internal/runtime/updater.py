@@ -39,10 +39,11 @@ def format_error(exception: Exception, message: str = None) -> str:
     return f'{message}[{name}]: {str(exception)}'
 
 class UpdaterInterface:
-    def __init__(self, title: str, ui_master: tk.Tk | None = None) -> None:
+    def __init__(self, title: str, update_name: str, ui_master: tk.Tk | None = None) -> None:
         # Properties
         self.ui_master = ui_master
         self.title = title
+        self.update_name = update_name
 
         self._loop: threading.Thread = None
         self._running: bool = False
@@ -55,12 +56,14 @@ class UpdaterInterface:
             self.root = tk.Tk()
         else:
             self.root = tk.Toplevel(self.ui_master)
+
+        self.root.title(title)
         
         # Create UI
         self.container = ttk.Frame(self.root, padding=10)
         self.container.grid()
 
-        self.label_title = ttk.Label(self.container, text=self.title, anchor="w")
+        self.label_title = ttk.Label(self.container, text=self.update_name, anchor="w")
         self.label_title.pack(expand=True, fill="x")
 
         self.label_status = ttk.Label(self.container, text="preparing...", anchor="w")
@@ -78,8 +81,6 @@ class UpdaterInterface:
         
         if max != None:
             self._progress_max = max
-        
-        self.root.update()
     
     def poll(self):
         self.label_status.config(text=self._text_status)
@@ -103,27 +104,35 @@ class UpdaterInterface:
     
     def destroy(self):
         if self._running:
-            self.loop_stop()
             self.root.destroy()
 
 class Updater:
-    def __init__(self, url: str, directory: str, branch: str = "main", update_name: str = "performing software update...", ui_master: tk.Tk = None) -> None:
+    def __init__(self,
+            url: str,
+            directory: str,
+            branch: str = "main",
+            update_title: str = "Software Update",
+            update_name: str = "performing software update...",
+            ui_master: tk.Tk = None
+        ) -> None:
+        
         self.url = url
         self.dir = directory
         self.branch = branch
         self.ui_master = ui_master
-        self.title = update_name
+        self.title = update_title
+        self.update_name = update_name
 
         self.interface: UpdaterInterface = None
         self._update_result: Result = None
     
     def update(self) -> Result:
         # Init UI
-        self.interface = UpdaterInterface(self.title)
+        self.interface = UpdaterInterface(self.title, self.update_name, self.ui_master)
 
         # Run update
         update_thread = threading.Thread(target=self._update)
-        update_thread.run()
+        update_thread.start()
 
         while update_thread.is_alive():
             self.interface.poll()
@@ -131,7 +140,7 @@ class Updater:
         # update_thread.join()
 
         self.interface.destroy()
-        return self._update_result or ()
+        return self._update_result or (False, "Unknown error")
 
     def _update(self) -> Result:
         # Set UI
