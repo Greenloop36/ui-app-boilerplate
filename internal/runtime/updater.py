@@ -240,11 +240,3 @@ class Updater:
             else:
                 # An update is available
                 return True, result            
-
-# Add testing functionality
-if __name__ == "__main__":
-    print("(Library testing)")
-    s, r = Updater(input("url> "), filedialog.askdirectory(initialdir=os.path.dirname(__file__))).update()
-
-    print(s,r)
-    input()
